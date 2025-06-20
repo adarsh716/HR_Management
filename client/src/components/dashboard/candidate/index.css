@@ -736,3 +736,92 @@
 .employee-dropdown-item:last-child {
   border-bottom: none;
 }
+
+/* Add these styles to your existing CSS file */
+
+.filter-summary {
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #6c757d;
+  border-left: 3px solid #007bff;
+}
+
+.clear-filters-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 8px;
+  transition: background-color 0.2s;
+}
+
+.clear-filters-button:hover {
+  background-color: #5a6268;
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-clear-button {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.search-clear-button:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.search-input {
+  padding-right: 30px; 
+}
+
+
+.filter-button.active {
+  background-color: #4d007d;
+  color: white;
+}
+
+.empty-state .clear-filters-button {
+  margin-top: 16px;
+  background-color: #4d007d;
+}
+
+.empty-state .clear-filters-button:hover {
+  background-color: #4d007d;
+}
+
+@media (max-width: 768px) {
+  .filter-summary {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .clear-filters-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+

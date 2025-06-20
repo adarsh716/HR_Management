@@ -1,5 +1,15 @@
-import React, { createContext, useState, useEffect } from "react";
-import { loginUser, registerUser, getAllCandidates, createCandidate } from "../api/auth";
+"use client";
+
+import { createContext, useState, useEffect } from "react";
+import {
+  loginUser,
+  registerUser,
+  getAllCandidates,
+  createCandidate,
+  deleteCandidate,
+  updateCandidateStatus,
+  downloadResume,
+} from "../api/auth";
 
 export const AuthContext = createContext();
 
@@ -9,13 +19,24 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [candidates, setCandidates] = useState([]);
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+     const expiry = localStorage.getItem("token_expiry");
     if (token) {
       setIsAuthenticated(true);
       setUser(JSON.parse(localStorage.getItem("user") || null));
       fetchCandidates();
+    }
+    if (expiry && Date.now() > parseInt(expiry)) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token_expiry");
+      setIsAuthenticated(false);
+      setUser(null);
+      setCandidates([]);
+      setError("Session expired, please log in again.");
     }
     setLoading(false);
   }, []);
@@ -33,8 +54,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await loginUser(credentials);
+
+      const expiry = Date.now() +  2 * 60 * 60 * 1000; 
+
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
+      localStorage.setItem("token_expiry", expiry.toString()); // store expiry
+
       setUser(response.user);
       setIsAuthenticated(true);
       fetchCandidates();
@@ -60,11 +86,74 @@ export const AuthProvider = ({ children }) => {
   const addCandidate = async (candidateData) => {
     try {
       const response = await createCandidate(candidateData);
-      fetchCandidates(); 
+      fetchCandidates();
       setError(null);
       return response;
     } catch (err) {
       setError(err.message || "Failed to add candidate");
+      throw err;
+    }
+  };
+
+  const removeCandidate = async (candidateId) => {
+    try {
+      await deleteCandidate(candidateId);
+      setCandidates((prev) =>
+        prev.filter((candidate) => candidate._id !== candidateId)
+      );
+      setError(null);
+      return { success: true, message: "Candidate deleted successfully" };
+    } catch (err) {
+      setError(err.message || "Failed to delete candidate");
+      throw err;
+    }
+  };
+
+  const updateStatus = async (candidateId, newStatus) => {
+    try {
+      // Set loading state for this specific candidate
+      setStatusUpdateLoading((prev) => ({ ...prev, [candidateId]: true }));
+
+      // Call API to update status
+      const response = await updateCandidateStatus(candidateId, newStatus);
+
+      // Update local state with the response
+      setCandidates((prev) =>
+        prev.map((candidate) =>
+          candidate._id === candidateId
+            ? { ...candidate, status: newStatus }
+            : candidate
+        )
+      );
+
+      setError(null);
+      return response;
+    } catch (err) {
+      setError(err.message || "Failed to update candidate status");
+      throw err;
+    } finally {
+      // Clear loading state
+      setStatusUpdateLoading((prev) => ({ ...prev, [candidateId]: false }));
+    }
+  };
+
+  const handleDownloadResume = async (candidateId, candidateName) => {
+    try {
+      console.log("AuthContext - handleDownloadResume called with:", {
+        candidateId,
+        candidateName,
+      }); // Debug log
+
+      if (!candidateId) {
+        throw new Error("Candidate ID is required");
+      }
+
+      await downloadResume(candidateId, candidateName);
+      setError(null);
+      return { success: true, message: "Resume downloaded successfully" };
+    } catch (err) {
+      console.error("AuthContext - Download error:", err);
+      setError(err.message || "Failed to download resume");
       throw err;
     }
   };
@@ -79,7 +168,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, error, candidates, login, register, addCandidate, logout, fetchCandidates }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        loading,
+        error,
+        candidates,
+        statusUpdateLoading,
+        login,
+        register,
+        addCandidate,
+        removeCandidate,
+        updateStatus,
+        handleDownloadResume,
+        logout,
+        fetchCandidates,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

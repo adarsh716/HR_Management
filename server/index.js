@@ -23,7 +23,7 @@ app.use(cors({
     callback(null, origin); 
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+  methods: ["GET", "POST", "PUT", "PATCH","DELETE", "OPTIONS"], 
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
@@ -31,13 +31,13 @@ app.use(cors({
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-app.use("/api/candidate", candidateRoutes);
+app.use("/api/candidate", candidateRoutes); 
 
 app.use(checkSession);
  
 connectDB();
 
-const PORT = process.env.port || 5000; 
+const PORT = process.env.port || 5000;  
 
 app.listen(PORT, () => { 
   console.log(`Server running on port ${PORT}`); 
