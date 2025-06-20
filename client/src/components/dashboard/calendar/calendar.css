@@ -1,0 +1,136 @@
+.calendar-wrapper-simple {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  width: 100%;
+  max-width: 350px;
+  position: relative;
+  z-index: 10000;
+}
+
+.calendar-header-simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.calendar-nav-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.calendar-nav-button:hover {
+  background-color: #f3f4f6;
+}
+
+.calendar-nav-icon {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+}
+
+.calendar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.calendar-icon {
+  margin-left: 8px;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-icon-svg {
+  width: 16px;
+  height: 16px;
+}
+
+.calendar-weekdays-simple{
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.calendar-weekday-simple{
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 6px 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.calendar-grid-simple{
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #374151;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background-color: #f3f4f6;
+}
+
+.calendar-day-empty {
+  height: 32px;
+}
+
+.calendar-day-disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.calendar-day-disabled:hover {
+  background-color: transparent;
+}
+
+.calendar-day-selected {
+  background-color: #7c3aed;
+  color: white;
+}
+
+.calendar-day-selected:hover {
+  background-color: #6d28d9;
+}
+
+.calendar-nav-button:focus,
+.calendar-day:focus {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.calendar-day:focus {
+  outline-offset: -2px;
+}
