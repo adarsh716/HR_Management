@@ -1,18 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext"; // Import AuthContext
+import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
 import "./login.css";
 import Login from "../../assets/login.png";
 import EyeSvg from "../../assets/eye.svg";
 import EyeHiddenSvg from "../../assets/eye-hidden.svg";
 
 export default function LoginPage() {
+  const { login } = useContext(AuthContext); // Access login function from AuthContext
+  const navigate = useNavigate(); // For redirecting after successful login
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [error, setError] = useState(null); // State for error messages
   const [showPassword, setShowPassword] = useState(false);
 
-  const togglePasswordVisibility = (field) => {
-    if (field === "password") setShowPassword(!showPassword);
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleInputChange = (event) => {
@@ -23,9 +28,20 @@ export default function LoginPage() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log("Form submitted:", formData);
+    setError(null); // Clear previous errors
+
+    try {
+      await login({
+        email: formData.email,
+        password: formData.password,
+      });
+      navigate("/dashboard"); // Redirect to dashboard on success
+    } catch (err) {
+      // Handle errors from backend (e.g., invalid credentials or server errors)
+      setError(err.message || "Login failed");
+    }
   };
 
   const isFormValid = () => {
@@ -70,6 +86,7 @@ export default function LoginPage() {
           <div className="form-section">
             <div className="form-container">
               <h1 className="form-title">Welcome to Dashboard</h1>
+              {error && <div className="error-message">{error}</div>} {/* Display errors */}
 
               <form onSubmit={handleSubmit} className="signup-form">
                 <div className="form-group">
@@ -103,7 +120,7 @@ export default function LoginPage() {
                     />
                     <span
                       className="password-toggle"
-                      onClick={() => togglePasswordVisibility("password")}
+                      onClick={togglePasswordVisibility}
                     >
                       <img
                         src={showPassword ? EyeHiddenSvg : EyeSvg}

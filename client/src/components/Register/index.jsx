@@ -1,17 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "../Login/login.css";
 import DashboardSvg from "../../assets/login.png";
 import EyeSvg from "../../assets/eye.svg";
 import EyeHiddenSvg from "../../assets/eye-hidden.svg";
 
 export default function RegisterPage() {
+  const { register } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
-
+  const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -23,10 +27,31 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log("Form submitted:", formData);
-  };
+  const handleSubmit = async (event) => {
+  event.preventDefault();
+  setError(null);
+
+  if (formData.password !== formData.confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  try {
+    await register({
+      fullname: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      role: "HR",
+    });
+    navigate("/login");
+  } catch (err) {
+    if (err.errors) {
+      setError(err.errors.map((e) => e.msg).join(", "));
+    } else {
+      setError(err.message || "Registration failed");
+    }
+  }
+};
 
   const togglePasswordVisibility = (field) => {
     if (field === "password") setShowPassword(!showPassword);
@@ -66,6 +91,7 @@ export default function RegisterPage() {
           <div className="form-section">
             <div className="form-container">
               <h1 className="form-title">Welcome to Dashboard</h1>
+              {error && <div className="error-message">{error}</div>}
 
               <form onSubmit={handleSubmit} className="signup-form">
                 <div className="form-group">

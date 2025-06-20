@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext"; // Import AuthContext
+import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
 import userAdd from "../../assets/user-add.svg";
 import logoutIcon from "../../assets/log-out.svg";
 import search from "../../assets/search.svg";
@@ -9,21 +11,29 @@ import leaves from "../../assets/leaves.svg";
 import "./sidebar.css";
 
 export const Sidebar = ({ activeItem, setActiveItem }) => {
+  const { logout } = useContext(AuthContext); // Access logout function from AuthContext
+  const navigate = useNavigate(); // For redirecting after logout
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-
 
   const menuItems = [
     { category: "Recruitment", items: [{ name: "Candidates", icon: userAdd, activeicon: purpleuserAdd }] },
     { category: "Organization", items: [{ name: "Employees", icon: groupuser }] },
     {
-      category: null, items: [
+      category: null,
+      items: [
         { name: "Attendance", icon: attendance },
         { name: "Leaves", icon: leaves },
-      ]
+      ],
     },
     { category: "Others", items: [] }, // Placeholder for future items
   ];
+
+  const handleLogout = () => {
+    logout(); // Call logout from AuthContext to clear token and state
+    setShowLogoutDialog(false); // Close dialog
+    navigate("/login"); // Redirect to login page
+  };
 
   return (
     <>
@@ -71,7 +81,7 @@ export const Sidebar = ({ activeItem, setActiveItem }) => {
             </div>
           ))}
           <button className="sidebar-item logout" onClick={() => setShowLogoutDialog(true)}>
-            <img src={logoutIcon} alt="Logout" className="sidebar-icon"  />
+            <img src={logoutIcon} alt="Logout" className="sidebar-icon" />
             Logout
           </button>
         </div>
@@ -86,11 +96,7 @@ export const Sidebar = ({ activeItem, setActiveItem }) => {
                 <button className="cancel-btn" onClick={() => setShowLogoutDialog(false)}>
                   Cancel
                 </button>
-                <button className="logout-btn" onClick={() => {
-                  // Replace this with your actual logout logic
-                  console.log("Logging out...");
-                  setShowLogoutDialog(false);
-                }}>
+                <button className="logout-btn" onClick={handleLogout}>
                   Logout
                 </button>
               </div>
@@ -98,7 +104,6 @@ export const Sidebar = ({ activeItem, setActiveItem }) => {
           </div>
         </div>
       )}
-
     </>
   );
 };

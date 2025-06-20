@@ -1,5 +1,6 @@
-import { useState } from "react"
-import resumeuploadIcon from "../../../assets/Resume-upload.svg"
+import { useState, useContext } from "react";
+import resumeuploadIcon from "../../../assets/Resume-upload.svg";
+import { AuthContext } from "../../../context/AuthContext";
 
 export default function AddCandidateDialog({
   isOpen,
@@ -10,23 +11,24 @@ export default function AddCandidateDialog({
   onCheckboxChange,
   onAddCandidate,
 }) {
+  const { error } = useContext(AuthContext);
   const [isFocused, setIsFocused] = useState({
     name: false,
     email: false,
     phone: false,
     position: false,
     experience: false,
-  })
+  });
 
   const handleFileClear = () => {
-    const fileInput = document.querySelector('input[type="file"]')
+    const fileInput = document.querySelector('input[type="file"]');
     if (fileInput) {
-      fileInput.value = ''
+      fileInput.value = "";
     }
-    onFileChange({ target: { files: [] } })
-  }
+    onFileChange({ target: { files: [] } });
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="custom-dialog-overlay">
@@ -130,7 +132,7 @@ export default function AddCandidateDialog({
               ) : (
                 <>
                   <span>Resume*</span>
-                  <input type="file" hidden onChange={onFileChange} />
+                  <input type="file" accept="application/pdf" hidden onChange={onFileChange} />
                   <span className="upload-icon"><img src={resumeuploadIcon} alt="resume upload" /></span>
                 </>
               )}
@@ -156,8 +158,9 @@ export default function AddCandidateDialog({
           >
             Save
           </button>
+          {error && <div className="error-message">{error}</div>}
         </div>
       </div>
     </div>
-  )
+  );
 }

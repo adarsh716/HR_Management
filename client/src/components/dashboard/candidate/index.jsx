@@ -1,55 +1,18 @@
-import { useState } from "react"
-import "./index.css"
-import notification from "../../../assets/notification.svg"
-import message from "../../../assets/message.svg"
-import profile from "../../../assets/profile.png"
-import downarrow from "../../../assets/downarrow.svg"
-import AddCandidateDialog from "./dialog.jsx"
+import { useState, useEffect, useContext } from "react";
+import "./index.css";
+import notification from "../../../assets/notification.svg";
+import message from "../../../assets/message.svg";
+import profile from "../../../assets/profile.png";
+import downarrow from "../../../assets/downarrow.svg";
+import AddCandidateDialog from "./dialog.jsx";
+import { AuthContext } from "../../../context/AuthContext";
 
 export default function CandidateManagement() {
-  const [candidates, setCandidates] = useState([
-    {
-      id: 1,
-      name: "Jacob William",
-      email: "jacob.william@example.com",
-      phone: "(252) 555-0111",
-      position: "Senior Developer",
-      status: "New",
-      experience: "1+",
-    },
-    {
-      id: 2,
-      name: "Guy Hawkins",
-      email: "kenzi.lawson@example.com",
-      phone: "(907) 555-0101",
-      position: "Human Resource I...",
-      status: "New",
-      experience: "10",
-    },
-    {
-      id: 3,
-      name: "Arlene McCoy",
-      email: "arlene.mccoy@example.com",
-      phone: "(302) 555-0107",
-      position: "Full Time Designer",
-      status: "Selected",
-      experience: "2",
-    },
-    {
-      id: 4,
-      name: "Leslie Alexander",
-      email: "willie.jennings@example.com",
-      phone: "(207) 555-0119",
-      position: "Full Time Developer",
-      status: "Rejected",
-      experience: "0",
-    },
-  ])
-
-  const [dropdownOpen, setDropdownOpen] = useState({})
-  const [actionMenuOpen, setActionMenuOpen] = useState({})
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const { isAuthenticated, user, error, candidates, addCandidate, logout, fetchCandidates } = useContext(AuthContext);
+  const [dropdownOpen, setDropdownOpen] = useState({});
+  const [actionMenuOpen, setActionMenuOpen] = useState({});
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [newCandidate, setNewCandidate] = useState({
     name: "",
     email: "",
@@ -58,35 +21,38 @@ export default function CandidateManagement() {
     experience: "",
     resume: null,
     accepted: false,
-  })
+  });
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "HR") {
+      fetchCandidates();
+    }
+  }, [isAuthenticated, user, fetchCandidates]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setNewCandidate((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setNewCandidate((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleFileChange = (e) => {
-    setNewCandidate((prev) => ({ ...prev, resume: e.target.files[0] }))
-  }
+    setNewCandidate((prev) => ({ ...prev, resume: e.target.files[0] }));
+  };
 
   const handleCheckboxChange = (e) => {
-    setNewCandidate((prev) => ({ ...prev, accepted: e.target.checked }))
-  }
+    setNewCandidate((prev) => ({ ...prev, accepted: e.target.checked }));
+  };
 
-  const handleAddCandidate = () => {
-    const { name, email, phone, position, experience, resume, accepted } = newCandidate
-    if (name && phone && accepted) {
-      const newEntry = {
-        id: candidates.length + 1,
-        name,
-        email,
-        phone,
-        position,
-        experience,
-        status: "New",
-      }
-      setCandidates((prev) => [...prev, newEntry])
-      setDialogOpen(false)
+  const handleAddCandidate = async () => {
+    const { name, email, phone, position, experience, resume, accepted } = newCandidate;
+    if (!name || !phone || !accepted) {
+      alert("Name, phone, and acceptance are required");
+      return;
+    }
+
+    const candidateData = { name, email, phone, position, experience, resume };
+    try {
+      await addCandidate(candidateData);
+      setDialogOpen(false);
       setNewCandidate({
         name: "",
         email: "",
@@ -95,45 +61,50 @@ export default function CandidateManagement() {
         experience: "",
         resume: null,
         accepted: false,
-      })
+      });
+    } catch (err) {
+      console.error("Add candidate error:", err);
     }
-  }
+  };
 
   const toggleDropdown = (id, type) => {
     setDropdownOpen((prev) => ({
       ...prev,
       [type + id]: !prev[type + id],
-    }))
-  }
+    }));
+  };
 
   const toggleActionMenu = (id) => {
     setActionMenuOpen((prev) => ({
       ...prev,
       [id]: !prev[id],
-    }))
-  }
+    }));
+  };
 
   const toggleProfileMenu = () => {
-    setProfileMenuOpen((prev) => !prev)
-  }
+    setProfileMenuOpen((prev) => !prev);
+  };
 
   const updateStatus = (id, newStatus) => {
     setCandidates((prev) =>
-      prev.map((candidate) => (candidate.id === id ? { ...candidate, status: newStatus } : candidate)),
-    )
-    setDropdownOpen({})
-  }
+      prev.map((candidate) =>
+        candidate._id === id ? { ...candidate, status: newStatus } : candidate
+      )
+    );
+    setDropdownOpen({});
+  };
 
   const handleDeleteCandidate = (id) => {
-    setCandidates((prev) => prev.filter((candidate) => candidate.id !== id))
-    setActionMenuOpen({})
-  }
+    setCandidates((prev) => prev.filter((candidate) => candidate._id !== id));
+    setActionMenuOpen({});
+  };
 
   const handleDownloadResume = (id) => {
-    // Placeholder for download resume functionality
-    console.log(`Downloading resume for candidate ${id}`)
-    setActionMenuOpen({})
-  }
+    console.log(`Downloading resume for candidate ${id}`);
+    setActionMenuOpen({});
+  };
+
+ 
 
   return (
     <div className="candidate-management-container">
@@ -158,6 +129,9 @@ export default function CandidateManagement() {
                     <div className="dropdown-item">Edit Profile</div>
                     <div className="dropdown-item">Change Password</div>
                     <div className="dropdown-item">Manage Notification</div>
+                    <div className="dropdown-item" onClick={logout}>
+                      Logout
+                    </div>
                   </div>
                 )}
               </div>
@@ -225,7 +199,7 @@ export default function CandidateManagement() {
                 </thead>
                 <tbody>
                   {candidates.map((candidate, index) => (
-                    <tr key={candidate.id} className="table-row">
+                    <tr key={candidate._id} className="table-row">
                       <td className="table-cell sr-no col-sr-no">{String(index + 1).padStart(2, "0")}</td>
                       <td className="table-cell name-cell col-name">{candidate.name}</td>
                       <td className="table-cell col-email">{candidate.email}</td>
@@ -234,21 +208,30 @@ export default function CandidateManagement() {
                       <td className="table-cell col-status">
                         <div className="status-dropdown">
                           <button
-                            onClick={() => toggleDropdown(candidate.id, "status")}
+                            onClick={() => toggleDropdown(candidate._id, "status")}
                             className={`status-button status-${candidate.status.toLowerCase()}`}
                           >
                             {candidate.status}
                             <span className="status-arrow">▼</span>
                           </button>
-                          {dropdownOpen["status" + candidate.id] && (
+                          {dropdownOpen["status" + candidate._id] && (
                             <div className="dropdown-menu">
-                              <div onClick={() => updateStatus(candidate.id, "New")} className="dropdown-item">
+                              <div
+                                onClick={() => updateStatus(candidate._id, "New")}
+                                className="dropdown-item"
+                              >
                                 New
                               </div>
-                              <div onClick={() => updateStatus(candidate.id, "Selected")} className="dropdown-item">
+                              <div
+                                onClick={() => updateStatus(candidate._id, "Selected")}
+                                className="dropdown-item"
+                              >
                                 Selected
                               </div>
-                              <div onClick={() => updateStatus(candidate.id, "Rejected")} className="dropdown-item">
+                              <div
+                                onClick={() => updateStatus(candidate._id, "Rejected")}
+                                className="dropdown-item"
+                              >
                                 Rejected
                               </div>
                             </div>
@@ -258,15 +241,21 @@ export default function CandidateManagement() {
                       <td className="table-cell experience-cell col-experience">{candidate.experience}</td>
                       <td className="table-cell col-action">
                         <div className="action-menu">
-                          <button onClick={() => toggleActionMenu(candidate.id)} className="action-button"></button>
-                          {actionMenuOpen[candidate.id] && (
+                          <button
+                            onClick={() => toggleActionMenu(candidate._id)}
+                            className="action-button"
+                          ></button>
+                          {actionMenuOpen[candidate._id] && (
                             <div className="dropdown-menu action-dropdown">
-                              <div className="dropdown-item" onClick={() => handleDownloadResume(candidate.id)}>
+                              <div
+                                className="dropdown-item"
+                                onClick={() => handleDownloadResume(candidate._id)}
+                              >
                                 Download Resume
                               </div>
                               <div
                                 className="dropdown-item delete-item"
-                                onClick={() => handleDeleteCandidate(candidate.id)}
+                                onClick={() => handleDeleteCandidate(candidate._id)}
                               >
                                 Delete Candidate
                               </div>
@@ -285,6 +274,7 @@ export default function CandidateManagement() {
               <div className="empty-state-subtext">Add candidates to get started</div>
             </div>
           )}
+          {error && <div className="error-message">{error}</div>}
         </div>
       </div>
       <AddCandidateDialog
@@ -297,5 +287,5 @@ export default function CandidateManagement() {
         onAddCandidate={handleAddCandidate}
       />
     </div>
-  )
+  );
 }
