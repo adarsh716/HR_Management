@@ -105,3 +105,30 @@ export const downloadResume = async (candidateId, candidateName) => {
     throw new Error("Failed to download resume: " + (error.response?.data?.message || error.message))
   }
 }
+
+export const getAllEmployees = async () => {
+  try {
+    const response = await apiClient.get("/api/employees")
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}
+
+export const updateEmployee = async (employeeId, employeeData) => {
+  try {
+    const response = await apiClient.put(`/api/employees/${employeeId}`, employeeData)
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}
+
+export const deleteEmployee = async (employeeId) => {
+  try {
+    const response = await apiClient.delete(`/api/employees/${employeeId}`)
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}

@@ -1,8 +1,8 @@
 const Candidate = require("../models/candidate");
 const Employee = require("../models/employee");
 const cloudinary = require("cloudinary").v2;
-const axios = require("axios")
-const path = require("path")
+const axios = require("axios");
+const path = require("path");
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -11,7 +11,7 @@ cloudinary.config({
 });
 
 const getContentType = (extension) => {
-  const ext = extension.toLowerCase().replace(".", "")
+  const ext = extension.toLowerCase().replace(".", "");
   const contentTypes = {
     pdf: "application/pdf",
     doc: "application/msword",
@@ -19,22 +19,21 @@ const getContentType = (extension) => {
     txt: "text/plain",
     rtf: "application/rtf",
     odt: "application/vnd.oasis.opendocument.text",
-  }
+  };
 
-  return contentTypes[ext] || "application/octet-stream"
-}
-
+  return contentTypes[ext] || "application/octet-stream";
+};
 
 exports.createCandidate = async (req, res) => {
   const { name, email, phone, position, experience } = req.body;
 
   console.log("Received candidate data:", {
-    name,   
+    name,
     email,
     phone,
     position,
     experience,
-    });
+  });
 
   let resumeUrl = "";
 
@@ -59,7 +58,7 @@ exports.createCandidate = async (req, res) => {
 
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        return res.status(400).json({
+        return res.status(400).json({ 
           message: "File too large. Maximum size is 10MB.",
         });
       }
@@ -72,7 +71,10 @@ exports.createCandidate = async (req, res) => {
             folder: "candidate_resumes",
             resource_type: "raw",
             format: "pdf",
-            use_filename: false, 
+            use_filename: false,
+            type: "upload", 
+            access_mode: "public",  
+            overwrite: true,
           }
         );
         resumeUrl = uploadResult.secure_url;
@@ -106,12 +108,10 @@ exports.createCandidate = async (req, res) => {
     const savedCandidate = await candidate.save();
     console.log("Saved Candidate:", savedCandidate._id);
 
-    res
-      .status(201)
-      .json({
-        message: "Candidate created successfully",
-        candidate: savedCandidate,
-      });
+    res.status(201).json({
+      message: "Candidate created successfully",
+      candidate: savedCandidate,
+    });
   } catch (error) {
     console.error("Error while creating candidate:", error);
 
@@ -152,7 +152,7 @@ exports.deleteCandidate = async (req, res) => {
     }
 
     if (candidate.resume) {
-      const publicId = candidate.resume.split('/').pop().split('.')[0];
+      const publicId = candidate.resume.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(`candidate_resumes/${publicId}`, {
         resource_type: "raw",
       });
@@ -168,39 +168,41 @@ exports.deleteCandidate = async (req, res) => {
 
 exports.downloadResume = async (req, res) => {
   try {
-    const { candidateId } = req.params
+    const { candidateId } = req.params;
 
     // Validate candidate ID format
     if (!candidateId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
         message: "Invalid candidate ID format",
-      })
+      });
     }
 
-    console.log(`Starting resume download for candidate ID: ${candidateId}`)
+    console.log(`Starting resume download for candidate ID: ${candidateId}`);
 
     // Find candidate
-    const candidate = await Candidate.findById(candidateId)
+    const candidate = await Candidate.findById(candidateId);
 
     if (!candidate) {
-      console.log(`Candidate not found: ${candidateId}`)
+      console.log(`Candidate not found: ${candidateId}`);
       return res.status(404).json({
         success: false,
         message: "Candidate not found",
-      })
+      });
     }
 
     if (!candidate.resume) {
-      console.log(`No resume found for candidate: ${candidateId}`)
+      console.log(`No resume found for candidate: ${candidateId}`);
       return res.status(404).json({
         success: false,
         message: "No resume found for this candidate",
-      })
+      });
     }
 
-    console.log(`Resume URL: ${candidate.resume}`)
-    console.log(`Resume download requested for candidate: ${candidate.name} (ID: ${candidateId})`)
+    console.log(`Resume URL: ${candidate.resume}`);
+    console.log(
+      `Resume download requested for candidate: ${candidate.name} (ID: ${candidateId})`
+    );
 
     try {
       // Add more robust headers and error handling
@@ -212,50 +214,59 @@ exports.downloadResume = async (req, res) => {
         maxRedirects: 5,
         headers: {
           "User-Agent": "Resume-Download-Service/1.0",
-          "Accept": "*/*",
+          Accept: "*/*",
           "Accept-Encoding": "gzip, deflate, br",
         },
         validateStatus: function (status) {
           return status >= 200 && status < 300; // Only resolve for 2xx status codes
-        }
-      })
+        },
+      });
 
-      console.log(`Successfully fetched resume from Cloudinary. Status: ${response.status}`)
+      console.log(
+        `Successfully fetched resume from Cloudinary. Status: ${response.status}`
+      );
 
       // Extract file extension and create filename
-      const urlPath = new URL(candidate.resume).pathname
-      const originalExtension = path.extname(urlPath) || ".pdf"
-      const sanitizedName = candidate.name.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_")
-      const filename = `${sanitizedName}_resume${originalExtension}`
+      const urlPath = new URL(candidate.resume).pathname;
+      const originalExtension = path.extname(urlPath) || ".pdf";
+      const sanitizedName = candidate.name
+        .replace(/[^a-zA-Z0-9\s]/g, "")
+        .replace(/\s+/g, "_");
+      const filename = `${sanitizedName}_resume${originalExtension}`;
 
       // Set response headers
-      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`)
-      res.setHeader("Content-Type", getContentType(originalExtension))
-      
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.setHeader("Content-Type", getContentType(originalExtension));
+
       // Set content length if available
       if (response.headers["content-length"]) {
-        res.setHeader("Content-Length", response.headers["content-length"])
+        res.setHeader("Content-Length", response.headers["content-length"]);
       }
 
       // Handle potential errors in the stream
       response.data.on("error", (streamError) => {
-        console.error("Stream error during download:", streamError)
-        if (!res.headersSent) { // Prevent sending headers if already sent
+        console.error("Stream error during download:", streamError);
+        if (!res.headersSent) {
+          // Prevent sending headers if already sent
           res.status(500).json({
             success: false,
             message: "Error streaming resume file",
-          })
+          });
         }
-      })
+      });
 
       // Handle successful completion
       response.data.on("end", () => {
-        console.log(`Resume successfully streamed for candidate: ${candidate.name}`)
-      })
+        console.log(
+          `Resume successfully streamed for candidate: ${candidate.name}`
+        );
+      });
 
       // Pipe the stream to response
-      response.data.pipe(res)
-
+      response.data.pipe(res);
     } catch (fetchError) {
       console.error("Error fetching resume from Cloudinary:", {
         message: fetchError.message,
@@ -263,61 +274,81 @@ exports.downloadResume = async (req, res) => {
         status: fetchError.response?.status,
         statusText: fetchError.response?.statusText,
         data: fetchError.response?.data, // Include response data for more details
-        url: candidate.resume
-      })
+        url: candidate.resume,
+      });
 
       // Handle specific error cases
       if (fetchError.code === "ECONNABORTED") {
         return res.status(408).json({
           success: false,
-          message: "Resume download timeout. The file may be too large or the connection is slow. Please try again.",
-        })
+          message:
+            "Resume download timeout. The file may be too large or the connection is slow. Please try again.",
+        });
       }
 
       if (fetchError.response?.status === 404) {
         return res.status(404).json({
           success: false,
-          message: "Resume file not found on storage server. It may have been deleted or moved.",
-        })
+          message:
+            "Resume file not found on storage server. It may have been deleted or moved.",
+        });
       }
 
       // If Cloudinary returns 403 (Forbidden), it means your server can't access it.
       // This is often due to Cloudinary settings for raw files or incorrect public_id.
       if (fetchError.response?.status === 403) {
-        return res.status(502).json({ // Return 502 Bad Gateway to client
+        return res.status(502).json({
+          // Return 502 Bad Gateway to client
           success: false,
           message: `Access denied to resume file from Cloudinary. Status: ${fetchError.response.status} ${fetchError.response.statusText}. Please check Cloudinary access settings.`,
-          errorDetails: process.env.NODE_ENV === 'development' ? fetchError.message : undefined,
-          cloudinaryResponse: process.env.NODE_ENV === 'development' ? fetchError.response?.data : undefined
-        })
+          errorDetails:
+            process.env.NODE_ENV === "development"
+              ? fetchError.message
+              : undefined,
+          cloudinaryResponse:
+            process.env.NODE_ENV === "development"
+              ? fetchError.response?.data
+              : undefined,
+        });
       }
 
       // Handle general Cloudinary server errors (5xx)
       if (fetchError.response?.status >= 500) {
-        return res.status(502).json({ // Return 502 Bad Gateway to client
+        return res.status(502).json({
+          // Return 502 Bad Gateway to client
           success: false,
           message: `Cloudinary server error. Status: ${fetchError.response.status} ${fetchError.response.statusText}. Please try again later.`,
-          errorDetails: process.env.NODE_ENV === 'development' ? fetchError.message : undefined,
-          cloudinaryResponse: process.env.NODE_ENV === 'development' ? fetchError.response?.data : undefined
-        })
+          errorDetails:
+            process.env.NODE_ENV === "development"
+              ? fetchError.message
+              : undefined,
+          cloudinaryResponse:
+            process.env.NODE_ENV === "development"
+              ? fetchError.response?.data
+              : undefined,
+        });
       }
 
       // Generic error for other Axios issues (e.g., DNS, no connection)
       return res.status(502).json({
         success: false,
-        message: "Unable to fetch resume file from storage. Please check server logs for details.",
-        error: process.env.NODE_ENV === 'development' ? fetchError.message : undefined
-      })
+        message:
+          "Unable to fetch resume file from storage. Please check server logs for details.",
+        error:
+          process.env.NODE_ENV === "development"
+            ? fetchError.message
+            : undefined,
+      });
     }
   } catch (error) {
-    console.error("Download resume error (outer catch):", error) // This catch block for errors *before* axios.get
+    console.error("Download resume error (outer catch):", error); // This catch block for errors *before* axios.get
     res.status(500).json({
       success: false,
       message: "Internal server error while processing download request",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    })
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
-}
+};
 exports.changeCandidateStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -331,36 +362,35 @@ exports.changeCandidateStatus = async (req, res) => {
     candidate.status = status;
     await candidate.save();
 
-
-    if (status === 'Selected') {
-
+    if (status === "Selected") {
       const existingEmployee = await Employee.findOne({ userId: id });
       if (existingEmployee) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "Candidate is already an employee",
           candidate,
-          employee: existingEmployee
+          employee: existingEmployee,
         });
       }
 
       const newEmployee = new Employee({
         userId: id,
         name: candidate.name,
-        email: candidate.email,     
+        email: candidate.email,
         phone: candidate.phone,
-        department: req.body.department || 'To be assigned', 
-        position: candidate.position || 'To be assigned',
+        department: req.body.department || "To be assigned",
+        position: candidate.position || "To be assigned",
         hireDate: req.body.hireDate || new Date(),
-        role: 'Employee',
-        status: 'Active'
+        role: "Employee",
+        status: "Active",
       });
 
       await newEmployee.save();
-      
-      return res.json({ 
-        message: "Candidate status updated to selected and employee record created", 
+
+      return res.json({
+        message:
+          "Candidate status updated to selected and employee record created",
         candidate,
-        employee: newEmployee
+        employee: newEmployee,
       });
     }
 
@@ -369,6 +399,4 @@ exports.changeCandidateStatus = async (req, res) => {
     console.error("Error updating candidate status:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
-}
-
-
+};

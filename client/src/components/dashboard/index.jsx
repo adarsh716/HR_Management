@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Sidebar } from "./sideBar";
 import CandidateManagement from "./candidate";
+import AttendanceManagement from "./attendance";
 import EmployeeManagement from "./employee";
 import "./dashboard.css"; 
 import LeaveManagement from "./leave";
@@ -14,7 +15,7 @@ const Dashboard = () => {
       <div className="main-content">
         {activeItem === "Candidates" && <CandidateManagement />}
         {activeItem === "Employees" && <EmployeeManagement />}
-         {/* {activeItem === "Attendance" && <LeaveManagement/> } */}
+         {activeItem === "Attendance" && <AttendanceManagement/> }
         {activeItem === "Leaves" && <LeaveManagement/>} 
       </div>
     </div>

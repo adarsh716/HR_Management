@@ -3,6 +3,7 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const candidateRoutes = require("./routes/candidate");
+const employeeRoutes = require("./routes/employee");
 const { checkSession } = require("./controllers/authController");
 const fileUpload = require('express-fileupload');
 
@@ -32,13 +33,14 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/candidate", candidateRoutes); 
-
-app.use(checkSession);
+app.use("/api/employees", employeeRoutes);
+ 
+app.use(checkSession); 
  
 connectDB();
 
-const PORT = process.env.port || 5000;  
+const PORT = process.env.port || 5000;    
 
 app.listen(PORT, () => { 
   console.log(`Server running on port ${PORT}`); 
-});     
+});       

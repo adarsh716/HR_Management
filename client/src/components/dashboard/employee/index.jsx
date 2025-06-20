@@ -1,60 +1,35 @@
-import React from "react";
+"use client"
 
-import { useState } from "react";
-import { Bell, MessageSquare, ChevronDown } from "lucide-react";
-import DatePicker from "../calendar/date-picker";
-import "./index.css";
+import { useState, useContext, useEffect, useMemo } from "react"
+import { ChevronDown } from "lucide-react"
+import DatePicker from "../calendar/date-picker"
+import { AuthContext } from "../../../context/AuthContext"
+import "./index.css"
 import notification from "../../../assets/notification.svg"
 import message from "../../../assets/message.svg"
 import profile from "../../../assets/profile.png"
 import downarrow from "../../../assets/downarrow.svg"
 
 export default function EmployeeManagement() {
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      name: "Jacob William",
-      email: "jacob.william@example.com",
-      phone: "(252) 555-0111",
-      position: "Senior Developer",
-      department: "Engineering",
-      dateOfJoining: "2023-03-15",
-    },
-    {
-      id: 2,
-      name: "Guy Hawkins",
-      email: "kenzi.lawson@example.com",
-      phone: "(907) 555-0101",
-      position: "Human Resource I...",
-      department: "HR",
-      dateOfJoining: "2022-11-08",
-    },
-    {
-      id: 3,
-      name: "Arlene McCoy",
-      email: "arlene.mccoy@example.com",
-      phone: "(302) 555-0107",
-      position: "Full Time Designer",
-      department: "Design",
-      dateOfJoining: "2023-07-22",
-    },
-    {
-      id: 4,
-      name: "Leslie Alexander",
-      email: "willie.jennings@example.com",
-      phone: "(207) 555-0119",
-      position: "Full Time Developer",
-      department: "Engineering",
-      dateOfJoining: "2024-01-10",
-    },
-    
-  ]);
+  const {
+    isAuthenticated,
+    user,
+    employees,
+    employeeLoading,
+    error,
+    editEmployee,
+    removeEmployee,
+    fetchEmployees,
+    logout,
+  } = useContext(AuthContext)
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState({});
-  const [actionMenuOpen, setActionMenuOpen] = useState({});
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState({})
+  const [actionMenuOpen, setActionMenuOpen] = useState({})
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [editId, setEditId] = useState(null);
+  const [editId, setEditId] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedDepartment, setSelectedDepartment] = useState("All Departments")
 
   const [newEmployee, setNewEmployee] = useState({
     name: "",
@@ -62,75 +37,138 @@ export default function EmployeeManagement() {
     phone: "",
     position: "",
     department: "",
-    dateOfJoining: "",
-  });
+    hireDate: "",
+  })
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "HR") {
+      fetchEmployees()
+    }
+  }, [isAuthenticated, user, fetchEmployees])
+
+  // Get unique departments from employees for filter dropdown
+  const uniqueDepartments = useMemo(() => {
+    const departments = employees.map((employee) => employee.department).filter(Boolean)
+    return [...new Set(departments)]
+  }, [employees])
+
+  // Filter employees based on search term and selected department
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((employee) => {
+      // Search filter - check name, email, and phone
+      const matchesSearch =
+        searchTerm === "" ||
+        employee.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.userId?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.userId?.phone?.includes(searchTerm)
+
+      // Department filter
+      const matchesDepartment = selectedDepartment === "All Departments" || employee.department === selectedDepartment
+
+      return matchesSearch && matchesDepartment
+    })
+  }, [employees, searchTerm, selectedDepartment])
 
   const toggleDropdown = (id, type) => {
     setDropdownOpen((prev) => ({
       ...prev,
       [type + id]: !prev[type + id],
-    }));
-  };
+    }))
+  }
 
   const toggleActionMenu = (id) => {
     setActionMenuOpen((prev) => ({
       ...prev,
       [id]: !prev[id],
-    }));
-  };
+    }))
+  }
 
-   const toggleProfileMenu = () => {
+  const toggleProfileMenu = () => {
     setProfileMenuOpen((prev) => !prev)
   }
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewEmployee((prev) => ({ ...prev, [name]: value }));
-  };
+    const { name, value } = e.target
+    setNewEmployee((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleDateChange = (date) => {
-    setNewEmployee((prev) => ({ ...prev, dateOfJoining: date }));
-  };
+    setNewEmployee((prev) => ({ ...prev, hireDate: date }))
+  }
 
   const openEditDialog = (employee) => {
-    setNewEmployee(employee);
-    setEditId(employee.id);
-    setDialogOpen(true);
-  };
-
-  const handleAddOrEditEmployee = () => {
-    if (editId) {
-      setEmployees((prev) =>
-        prev.map((emp) =>
-          emp.id === editId ? { ...newEmployee, id: editId } : emp
-        )
-      );
-    } else {
-      setEmployees((prev) => [
-        ...prev,
-        {
-          ...newEmployee,
-          id: Math.max(...prev.map((e) => e.id), 0) + 1,
-        },
-      ]);
-    }
-
     setNewEmployee({
-      name: "",
-      email: "",
-      phone: "",
-      position: "",
-      department: "",
-      dateOfJoining: "",
-    });
-    setEditId(null);
-    setDialogOpen(false);
-  };
+      name: employee.userId?.name || "",
+      email: employee.userId?.email || "",
+      phone: employee.userId?.phone || "",
+      position: employee.position || "",
+      department: employee.department || "",
+      hireDate: employee.hireDate ? employee.hireDate.split("T")[0] : "",
+    })
+    setEditId(employee._id)
+    setDialogOpen(true)
+  }
 
-  const deleteEmployee = (id) => {
-    setEmployees((prev) => prev.filter((e) => e.id !== id));
-    setActionMenuOpen((prev) => ({ ...prev, [id]: false }));
-  };
+  const handleEditEmployee = async () => {
+    if (!editId) return
+
+    try {
+      await editEmployee(editId, {
+        department: newEmployee.department,
+        position: newEmployee.position,
+        hireDate: newEmployee.hireDate,
+      })
+
+      setNewEmployee({
+        name: "",
+        email: "",
+        phone: "",
+        position: "",
+        department: "",
+        hireDate: "",
+      })
+      setEditId(null)
+      setDialogOpen(false)
+    } catch (err) {
+      console.error("Edit employee error:", err)
+      alert("Failed to update employee. Please try again.")
+    }
+  }
+
+  const handleDeleteEmployee = async (id) => {
+    if (window.confirm("Are you sure you want to delete this employee?")) {
+      try {
+        await removeEmployee(id)
+        setActionMenuOpen((prev) => ({ ...prev, [id]: false }))
+      } catch (err) {
+        console.error("Delete employee error:", err)
+        alert("Failed to delete employee. Please try again.")
+      }
+    }
+  }
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const handleDepartmentFilter = (department) => {
+    setSelectedDepartment(department)
+    setDropdownOpen({})
+  }
+
+  const clearFilters = () => {
+    setSearchTerm("")
+    setSelectedDepartment("All Departments")
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return ""
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
 
   return (
     <div className="employee-management-container">
@@ -141,37 +179,24 @@ export default function EmployeeManagement() {
             <h1 className="employee-title">Employees</h1>
             <div className="header-icons">
               <div className="icon-item">
-                <img
-                  src={message || "/placeholder.svg"}
-                  alt="Message"
-                  className="message-icon"
-                />
+                <img src={message || "/placeholder.svg"} alt="Message" className="message-icon" />
               </div>
               <div className="icon-item">
-                <img
-                  src={notification || "/placeholder.svg"}
-                  alt="Notification"
-                  className="notification-icon"
-                />
+                <img src={notification || "/placeholder.svg"} alt="Notification" className="notification-icon" />
               </div>
               <div className="profile-section" onClick={toggleProfileMenu}>
                 <div className="profile-avatar">
-                  <img
-                    src={profile || "/placeholder.svg"}
-                    alt="Profile"
-                    className="profile-image"
-                  />
+                  <img src={profile || "/placeholder.svg"} alt="Profile" className="profile-image" />
                 </div>
-                <img
-                  src={downarrow || "/placeholder.svg"}
-                  alt="Dropdown"
-                  className="dropdown-icon"
-                />
+                <img src={downarrow || "/placeholder.svg"} alt="Dropdown" className="dropdown-icon" />
                 {profileMenuOpen && (
                   <div className="profile-dropdown">
                     <div className="dropdown-item">Edit Profile</div>
                     <div className="dropdown-item">Change Password</div>
                     <div className="dropdown-item">Manage Notification</div>
+                    <div className="dropdown-item" onClick={logout}>
+                      Logout
+                    </div>
                   </div>
                 )}
               </div>
@@ -181,43 +206,72 @@ export default function EmployeeManagement() {
           <div className="header-bottom">
             <div className="filter-buttons">
               <div className="filter-dropdown">
-                <button
-                  onClick={() => toggleDropdown("position", "filter")}
-                  className="filter-button"
-                >
-                  Position
+                <button onClick={() => toggleDropdown("department", "filter")} className="filter-button">
+                  {selectedDepartment}
                   <ChevronDown className="filter-arrow" />
                 </button>
-                {dropdownOpen["filterposition"] && (
+                {dropdownOpen["filterdepartment"] && (
                   <div className="dropdown-menu">
-                    <div className="dropdown-item">All Positions</div>
-                    <div className="dropdown-item">Developer</div>
-                    <div className="dropdown-item">Designer</div>
-                    <div className="dropdown-item">HR</div>
+                    <div className="dropdown-item" onClick={() => handleDepartmentFilter("All Departments")}>
+                      All Departments
+                    </div>
+                    {uniqueDepartments.map((department) => (
+                      <div
+                        key={department}
+                        className="dropdown-item"
+                        onClick={() => handleDepartmentFilter(department)}
+                      >
+                        {department}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
+
+              {/* Clear filters button */}
+              {(searchTerm || selectedDepartment !== "All Departments") && (
+                <button className="clear-filters-button" onClick={clearFilters}>
+                  Clear Filters
+                </button>
+              )}
             </div>
 
             <div className="search-add-container">
-              <input
-                type="text"
-                placeholder="Search"
-                className="search-input"
-              />
-              <button
-                onClick={() => setDialogOpen(true)}
-                className="add-employee-button"
-              >
-                Add Employee
-              </button>
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Search employees..."
+                  className="search-input"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+                {searchTerm && (
+                  <button className="search-clear-button" onClick={() => setSearchTerm("")} aria-label="Clear search">
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Filter summary */}
+          {filteredEmployees.length !== employees.length && (
+            <div className="filter-summary">
+              Showing {filteredEmployees.length} of {employees.length} employees
+              {searchTerm && <span> matching "{searchTerm}"</span>}
+              {selectedDepartment !== "All Departments" && <span> in {selectedDepartment}</span>}
+            </div>
+          )}
         </div>
 
         {/* Table */}
         <div className="table-container">
-          {employees.length > 0 ? (
+          {employeeLoading ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <div>Loading employees...</div>
+            </div>
+          ) : filteredEmployees.length > 0 ? (
             <div className="table-wrapper">
               <table className="employee-table">
                 <thead className="table-header">
@@ -233,38 +287,28 @@ export default function EmployeeManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {employees.map((emp) => (
-                    <tr key={emp.id} className="table-row">
+                  {filteredEmployees.map((emp) => (
+                    <tr key={emp._id} className="table-row">
                       <td className="table-cell">
-                        <img
-                          src={profile || "/placeholder.svg"} />
+                        <img src={profile || "/placeholder.svg"} alt="Profile" className="profile-image-small" />
                       </td>
-                      <td className="table-cell table-cell-name">{emp.name}</td>
-                      <td className="table-cell">{emp.email}</td>
-                      <td className="table-cell">{emp.phone}</td>
+                      <td className="table-cell table-cell-name">{emp.userId?.name || "N/A"}</td>
+                      <td className="table-cell">{emp.userId?.email || "N/A"}</td>
+                      <td className="table-cell">{emp.userId?.phone || "N/A"}</td>
                       <td className="table-cell">{emp.position}</td>
                       <td className="table-cell">{emp.department}</td>
-                      <td className="table-cell">{emp.dateOfJoining}</td>
+                      <td className="table-cell">{formatDate(emp.hireDate)}</td>
                       <td className="table-cell">
                         <div className="action-menu">
-                          <button
-                            onClick={() => toggleActionMenu(emp.id)}
-                            className="action-button"
-                          >
+                          <button onClick={() => toggleActionMenu(emp._id)} className="action-button">
                             <span className="action-dots"></span>
                           </button>
-                          {actionMenuOpen[emp.id] && (
+                          {actionMenuOpen[emp._id] && (
                             <div className="action-dropdown">
-                              <div
-                                className="dropdown-item"
-                                onClick={() => openEditDialog(emp)}
-                              >
+                              <div className="dropdown-item" onClick={() => openEditDialog(emp)}>
                                 Edit Employee
                               </div>
-                              <div
-                                className="dropdown-item delete-item"
-                                onClick={() => deleteEmployee(emp.id)}
-                              >
+                              <div className="dropdown-item delete-item" onClick={() => handleDeleteEmployee(emp._id)}>
                                 Delete Employee
                               </div>
                             </div>
@@ -278,27 +322,32 @@ export default function EmployeeManagement() {
             </div>
           ) : (
             <div className="empty-state">
-              <div className="empty-state-text">No employees found</div>
-              <div className="empty-state-subtext">
-                Add employees to get started
+              <div className="empty-state-text">
+                {employees.length === 0 ? "No employees found" : "No employees match your filters"}
               </div>
+              <div className="empty-state-subtext">
+                {employees.length === 0
+                  ? "Employees will appear here when candidates are marked as 'Selected'"
+                  : "Try adjusting your search or filter criteria"}
+              </div>
+              {employees.length > 0 && (
+                <button className="clear-filters-button" onClick={clearFilters}>
+                  Clear All Filters
+                </button>
+              )}
             </div>
           )}
+          {error && <div className="error-message">{error}</div>}
         </div>
       </div>
 
-      {/* Dialog */}
+      {/* Edit Dialog */}
       {dialogOpen && (
         <div className="dialog-overlay">
           <div className="dialog-container">
             <div className="dialog-header">
-              <span className="dialog-title">
-                {editId ? "Edit Employee Details" : "Add New Employee"}
-              </span>
-              <button
-                onClick={() => setDialogOpen(false)}
-                className="dialog-close-button"
-              >
+              <span className="dialog-title">Edit Employee Details</span>
+              <button onClick={() => setDialogOpen(false)} className="dialog-close-button">
                 ×
               </button>
             </div>
@@ -312,6 +361,8 @@ export default function EmployeeManagement() {
                   className="dialog-input"
                   value={newEmployee.name}
                   onChange={handleInputChange}
+                  disabled
+                  title="Name cannot be edited from employee record"
                 />
                 <input
                   type="email"
@@ -320,6 +371,8 @@ export default function EmployeeManagement() {
                   className="dialog-input"
                   value={newEmployee.email}
                   onChange={handleInputChange}
+                  disabled
+                  title="Email cannot be edited from employee record"
                 />
                 <input
                   type="text"
@@ -328,6 +381,8 @@ export default function EmployeeManagement() {
                   className="dialog-input"
                   value={newEmployee.phone}
                   onChange={handleInputChange}
+                  disabled
+                  title="Phone cannot be edited from employee record"
                 />
                 <input
                   type="text"
@@ -350,22 +405,21 @@ export default function EmployeeManagement() {
                   <option value="Marketing">Marketing</option>
                   <option value="Sales">Sales</option>
                   <option value="Operations">Operations</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Product">Product</option>
+                  <option value="General">General</option>
                 </select>
 
-                <DatePicker
-                  value={newEmployee.dateOfJoining}
-                  onChange={handleDateChange}
-                  placeholder="Date of Joining*"
-                />
+                <DatePicker value={newEmployee.hireDate} onChange={handleDateChange} placeholder="Date of Joining*" />
               </div>
 
-              <button className="save-button" onClick={handleAddOrEditEmployee}>
-                {editId ? "Update" : "Save"}
+              <button className="save-button" onClick={handleEditEmployee}>
+                Update Employee
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -1,0 +1,107 @@
+.status-dropdown {
+  padding: 6px 12px;
+  padding-right: 30px; 
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-position: right 10px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  min-width: 110px;
+  background-color: #FFFFFF;
+  text-align: center;
+
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23333' height='14' viewBox='0 0 24 24' width='14' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+}
+
+/* Green pill */
+.status-dropdown.present {
+
+  color: #137333;
+  border: 1px solid #137333;
+}
+
+/* Red pill */
+.status-dropdown.absent {
+
+  color: #d93025;
+  border: 1px solid #d93025;
+}
+
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background-color: #f3f3f3;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.dropdown-icon {
+  font-size: 10px;
+  color: inherit;
+  margin-top: 2px;
+}
+.dropdown-pill.present {
+  color: #137333;
+  background-color: #FFFFFF;
+  border: 1px solid #137333;
+}
+
+.dropdown-pill.absent {
+  color: #d93025;
+  background-color: #FFFFFF;
+  border: 1px solid #d93025;
+}
+
+.dropdown-menu-card {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0px 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+  width: 150px;
+  padding: 10px;
+}
+
+.dropdown-option {
+  padding: 10px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  text-align: center;
+}
+
+.dropdown-option:hover {
+  background-color: #f3f3f3;
+}
+
+.dropdown-option.present {
+  color: #6c2bd9;
+}
+
+.dropdown-option.absent {
+  color: #333;
+}
