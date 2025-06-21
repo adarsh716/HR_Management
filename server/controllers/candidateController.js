@@ -170,7 +170,6 @@ exports.downloadResume = async (req, res) => {
   try {
     const { candidateId } = req.params;
 
-    // Validate candidate ID format
     if (!candidateId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
@@ -180,7 +179,6 @@ exports.downloadResume = async (req, res) => {
 
     console.log(`Starting resume download for candidate ID: ${candidateId}`);
 
-    // Find candidate
     const candidate = await Candidate.findById(candidateId);
 
     if (!candidate) {
@@ -205,12 +203,12 @@ exports.downloadResume = async (req, res) => {
     );
 
     try {
-      // Add more robust headers and error handling
+
       const response = await axios({
         method: "GET",
         url: candidate.resume,
         responseType: "stream",
-        timeout: 60000, // Increased timeout to 60 seconds
+        timeout: 60000, 
         maxRedirects: 5,
         headers: {
           "User-Agent": "Resume-Download-Service/1.0",
@@ -218,7 +216,7 @@ exports.downloadResume = async (req, res) => {
           "Accept-Encoding": "gzip, deflate, br",
         },
         validateStatus: function (status) {
-          return status >= 200 && status < 300; // Only resolve for 2xx status codes
+          return status >= 200 && status < 300; 
         },
       });
 
@@ -226,7 +224,7 @@ exports.downloadResume = async (req, res) => {
         `Successfully fetched resume from Cloudinary. Status: ${response.status}`
       );
 
-      // Extract file extension and create filename
+
       const urlPath = new URL(candidate.resume).pathname;
       const originalExtension = path.extname(urlPath) || ".pdf";
       const sanitizedName = candidate.name
@@ -234,23 +232,22 @@ exports.downloadResume = async (req, res) => {
         .replace(/\s+/g, "_");
       const filename = `${sanitizedName}_resume${originalExtension}`;
 
-      // Set response headers
+
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="${filename}"`
       );
       res.setHeader("Content-Type", getContentType(originalExtension));
 
-      // Set content length if available
       if (response.headers["content-length"]) {
         res.setHeader("Content-Length", response.headers["content-length"]);
       }
 
-      // Handle potential errors in the stream
+
       response.data.on("error", (streamError) => {
         console.error("Stream error during download:", streamError);
         if (!res.headersSent) {
-          // Prevent sending headers if already sent
+  
           res.status(500).json({
             success: false,
             message: "Error streaming resume file",
@@ -258,14 +255,14 @@ exports.downloadResume = async (req, res) => {
         }
       });
 
-      // Handle successful completion
+
       response.data.on("end", () => {
         console.log(
           `Resume successfully streamed for candidate: ${candidate.name}`
         );
       });
 
-      // Pipe the stream to response
+      
       response.data.pipe(res);
     } catch (fetchError) {
       console.error("Error fetching resume from Cloudinary:", {

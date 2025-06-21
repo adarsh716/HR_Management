@@ -6,11 +6,7 @@ const leaveSchema = new mongoose.Schema({
     ref: 'Employee',
     required: true,
   },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
+  leaveDate: {
     type: Date,
     required: true,
   },
@@ -18,15 +14,14 @@ const leaveSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+   document: {
+    type: String, 
+    required: true,
+  },
   status: {
     type: String,
     enum: ['Pending', 'Approved', 'Rejected'],
     default: 'Pending',
-  },
-  approvedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null,
   },
   createdAt: {
     type: Date,
