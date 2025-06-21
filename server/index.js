@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const candidateRoutes = require("./routes/candidate");
 const employeeRoutes = require("./routes/employee");
+const attendanceRoutes = require("./routes/attendance");
 const { checkSession } = require("./controllers/authController");
 const fileUpload = require('express-fileupload');
 
@@ -34,6 +35,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/candidate", candidateRoutes); 
 app.use("/api/employees", employeeRoutes);
+app.use("/api/attendance", employeeRoutes);
  
 app.use(checkSession); 
  

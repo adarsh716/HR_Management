@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { createContext, useState, useEffect, useCallback } from "react"
+import { createContext, useState, useEffect, useCallback } from "react";
 import {
   loginUser,
   registerUser,
@@ -12,203 +12,281 @@ import {
   getAllEmployees,
   updateEmployee,
   deleteEmployee,
-} from "../api/auth"
+  getAllEmployeesWithAttendance,
+  updateAttendanceStatus,
+} from "../api/auth";
 
-export const AuthContext = createContext()
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [candidates, setCandidates] = useState([])
-  const [employees, setEmployees] = useState([])
-  const [statusUpdateLoading, setStatusUpdateLoading] = useState({})
-  const [employeeLoading, setEmployeeLoading] = useState(false)
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [attendanceData, setAttendanceData] = useState([]); // Initialize as empty array
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState({});
+  const [employeeLoading, setEmployeeLoading] = useState(false);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    const expiry = localStorage.getItem("token_expiry")
+    const token = localStorage.getItem("token");
+    const expiry = localStorage.getItem("token_expiry");
     if (token) {
-      setIsAuthenticated(true)
-      setUser(JSON.parse(localStorage.getItem("user") || null))
-      fetchCandidates()
-      fetchEmployees()
+      setIsAuthenticated(true);
+      setUser(JSON.parse(localStorage.getItem("user") || null));
+      fetchCandidates();
+      fetchEmployees();
+      fetchAttendanceData();
     }
     if (expiry && Date.now() > Number.parseInt(expiry)) {
-      localStorage.removeItem("token")
-      localStorage.removeItem("user")
-      localStorage.removeItem("token_expiry")
-      setIsAuthenticated(false)
-      setUser(null)
-      setCandidates([])
-      setEmployees([])
-      setError("Session expired, please log in again.")
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token_expiry");
+      setIsAuthenticated(false);
+      setUser(null);
+      setCandidates([]);
+      setEmployees([]);
+      setAttendanceData([]);
+      setError("Session expired, please log in again.");
     }
-    setLoading(false)
-  }, []) // Remove fetchEmployees from dependency array
+    setLoading(false);
+  }, []);
 
-  // Add useCallback to make fetchEmployees stable
   const fetchEmployees = useCallback(async () => {
     try {
-      setEmployeeLoading(true)
-      const data = await getAllEmployees()
-      setEmployees(data.employees || [])
-      setError(null)
+      setEmployeeLoading(true);
+      const data = await getAllEmployees();
+      setEmployees(data.employees || []);
+      setError(null);
     } catch (err) {
-      setError(err.message || "Failed to fetch employees")
+      setError(err.message || "Failed to fetch employees");
     } finally {
-      setEmployeeLoading(false)
+      setEmployeeLoading(false);
     }
-  }, [])
+  }, []);
 
   const fetchCandidates = useCallback(async () => {
     try {
-      const data = await getAllCandidates()
-      setCandidates(data.candidates || [])
-      setError(null)
+      const data = await getAllCandidates();
+      setCandidates(data.candidates || []);
+      setError(null);
     } catch (err) {
-      setError(err.message || "Failed to fetch candidates")
+      setError(err.message || "Failed to fetch candidates");
     }
-  }, [])
+  }, []);
+
+  const fetchAttendanceData = useCallback(async () => {
+    try {
+      setAttendanceLoading(true);
+      const data = await getAllEmployeesWithAttendance();
+
+      if (Array.isArray(data)) {
+        setAttendanceData(data);
+      } else if (data && Array.isArray(data.employees)) {
+        setAttendanceData(data.employees);
+      } else if (data && Array.isArray(data.data)) {
+        setAttendanceData(data.data);
+      } else {
+        console.warn("Attendance data is not in expected format:", data);
+        setAttendanceData([]);
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error("Fetch attendance error:", err);
+      setError(err.message || "Failed to fetch attendance data");
+      setAttendanceData([]); // Set to empty array on error
+    } finally {
+      setAttendanceLoading(false);
+    }
+  }, []);
 
   const login = async (credentials) => {
     try {
-      const response = await loginUser(credentials)
+      const response = await loginUser(credentials);
 
-      const expiry = Date.now() + 2 * 60 * 60 * 1000
+      const expiry = Date.now() + 2 * 60 * 60 * 1000;
 
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("user", JSON.stringify(response.user))
-      localStorage.setItem("token_expiry", expiry.toString())
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
+      localStorage.setItem("token_expiry", expiry.toString());
 
-      setUser(response.user)
-      setIsAuthenticated(true)
-      fetchCandidates()
-      fetchEmployees()
-      setError(null)
-      return response
+      setUser(response.user);
+      setIsAuthenticated(true);
+      fetchCandidates();
+      fetchEmployees();
+      fetchAttendanceData();
+      setError(null);
+      return response;
     } catch (err) {
-      setError(err.message || "Login failed")
-      throw err
+      setError(err.message || "Login failed");
+      throw err;
     }
-  }
+  };
 
   const register = async (userData) => {
     try {
-      const response = await registerUser(userData)
-      setError(null)
-      return response
+      const response = await registerUser(userData);
+      setError(null);
+      return response;
     } catch (err) {
-      setError(err.message || "Registration failed")
-      throw err
+      setError(err.message || "Registration failed");
+      throw err;
     }
-  }
+  };
 
   const addCandidate = async (candidateData) => {
     try {
-      const response = await createCandidate(candidateData)
-      fetchCandidates()
-      setError(null)
-      return response
+      const response = await createCandidate(candidateData);
+      fetchCandidates();
+      setError(null);
+      return response;
     } catch (err) {
-      setError(err.message || "Failed to add candidate")
-      throw err
+      setError(err.message || "Failed to add candidate");
+      throw err;
     }
-  }
+  };
 
   const removeCandidate = async (candidateId) => {
     try {
-      await deleteCandidate(candidateId)
-      setCandidates((prev) => prev.filter((candidate) => candidate._id !== candidateId))
-      setError(null)
-      return { success: true, message: "Candidate deleted successfully" }
+      await deleteCandidate(candidateId);
+      setCandidates((prev) =>
+        prev.filter((candidate) => candidate._id !== candidateId)
+      );
+      setError(null);
+      return { success: true, message: "Candidate deleted successfully" };
     } catch (err) {
-      setError(err.message || "Failed to delete candidate")
-      throw err
+      setError(err.message || "Failed to delete candidate");
+      throw err;
     }
-  }
+  };
 
   const updateStatus = async (candidateId, newStatus, employeeData = {}) => {
     try {
-      setStatusUpdateLoading((prev) => ({ ...prev, [candidateId]: true }))
+      setStatusUpdateLoading((prev) => ({ ...prev, [candidateId]: true }));
 
-      const response = await updateCandidateStatus(candidateId, newStatus, employeeData)
+      const response = await updateCandidateStatus(
+        candidateId,
+        newStatus,
+        employeeData
+      );
 
       setCandidates((prev) =>
-        prev.map((candidate) => (candidate._id === candidateId ? { ...candidate, status: newStatus } : candidate)),
-      )
+        prev.map((candidate) =>
+          candidate._id === candidateId
+            ? { ...candidate, status: newStatus }
+            : candidate
+        )
+      );
 
-      // If employee was created, refresh employees list
       if (newStatus === "Selected") {
-        fetchEmployees()
+        fetchEmployees();
+        fetchAttendanceData();
       }
 
-      setError(null)
-      return response
+      setError(null);
+      return response;
     } catch (err) {
-      setError(err.message || "Failed to update candidate status")
-      throw err
+      setError(err.message || "Failed to update candidate status");
+      throw err;
     } finally {
-      setStatusUpdateLoading((prev) => ({ ...prev, [candidateId]: false }))
+      setStatusUpdateLoading((prev) => ({ ...prev, [candidateId]: false }));
     }
-  }
+  };
 
   const handleDownloadResume = async (candidateId, candidateName) => {
     try {
       console.log("AuthContext - handleDownloadResume called with:", {
         candidateId,
         candidateName,
-      })
+      });
 
       if (!candidateId) {
-        throw new Error("Candidate ID is required")
+        throw new Error("Candidate ID is required");
       }
 
-      await downloadResume(candidateId, candidateName)
-      setError(null)
-      return { success: true, message: "Resume downloaded successfully" }
+      await downloadResume(candidateId, candidateName);
+      setError(null);
+      return { success: true, message: "Resume downloaded successfully" };
     } catch (err) {
-      console.error("AuthContext - Download error:", err)
-      setError(err.message || "Failed to download resume")
-      throw err
+      console.error("AuthContext - Download error:", err);
+      setError(err.message || "Failed to download resume");
+      throw err;
     }
-  }
+  };
 
   const editEmployee = async (employeeId, employeeData) => {
     try {
-      const response = await updateEmployee(employeeId, employeeData)
-      setEmployees((prev) => prev.map((emp) => (emp._id === employeeId ? { ...emp, ...employeeData } : emp)))
-      setError(null)
-      return response
+      const response = await updateEmployee(employeeId, employeeData);
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp._id === employeeId ? { ...emp, ...employeeData } : emp
+        )
+      );
+      setError(null);
+      return response;
     } catch (err) {
-      setError(err.message || "Failed to update employee")
-      throw err
+      setError(err.message || "Failed to update employee");
+      throw err;
     }
-  }
+  };
 
   const removeEmployee = async (employeeId) => {
     try {
-      await deleteEmployee(employeeId)
-      setEmployees((prev) => prev.filter((emp) => emp._id !== employeeId))
-      setError(null)
-      return { success: true, message: "Employee deleted successfully" }
+      await deleteEmployee(employeeId);
+      setEmployees((prev) => prev.filter((emp) => emp._id !== employeeId));
+      setError(null);
+      return { success: true, message: "Employee deleted successfully" };
     } catch (err) {
-      setError(err.message || "Failed to delete employee")
-      throw err
+      setError(err.message || "Failed to delete employee");
+      throw err;
     }
-  }
+  };
+
+  const updateAttendance = async (employeeId, status) => {
+    try {
+      setStatusUpdateLoading((prev) => ({ ...prev, [employeeId]: true }));
+
+      console.log(
+        "Updating attendance for employee: 2 : ",
+        employeeId,
+        "with status:",
+        status
+      );
+      const response = await updateAttendanceStatus(employeeId, status);
+
+      setAttendanceData((prev) =>
+        prev.map((emp) =>
+          emp._id === employeeId
+            ? { ...emp, status: status}
+            : emp
+        )
+      );
+
+      setError(null);
+      return response;
+    } catch (err) {
+      console.error("Update attendance error:", err);
+      setError(err.message || "Failed to update attendance");
+      throw err;
+    } finally {
+      setStatusUpdateLoading((prev) => ({ ...prev, [employeeId]: false }));
+    }
+  };
 
   const logout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    localStorage.removeItem("token_expiry")
-    setUser(null)
-    setIsAuthenticated(false)
-    setCandidates([])
-    setEmployees([])
-    setError(null)
-  }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token_expiry");
+    setUser(null);
+    setIsAuthenticated(false);
+    setCandidates([]);
+    setEmployees([]);
+    setAttendanceData([]);
+    setError(null);
+  };
 
   return (
     <AuthContext.Provider
@@ -219,7 +297,9 @@ export const AuthProvider = ({ children }) => {
         error,
         candidates,
         employees,
+        attendanceData,
         employeeLoading,
+        attendanceLoading,
         statusUpdateLoading,
         login,
         register,
@@ -229,12 +309,14 @@ export const AuthProvider = ({ children }) => {
         handleDownloadResume,
         editEmployee,
         removeEmployee,
+        updateAttendance,
         fetchEmployees,
+        fetchAttendanceData,
         logout,
         fetchCandidates,
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};

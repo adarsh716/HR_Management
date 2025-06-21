@@ -6,20 +6,14 @@ const attendanceSchema = new mongoose.Schema({
     ref: 'Employee',
     required: true,
   },
-  date: {
-    type: Date,
+  task:{
+    type: String,
     required: true,
   },
   status: {
     type: String,
     enum: ['Present', 'Absent', 'Half-Day'],
     required: true,
-  },
-  checkInTime: {
-    type: Date,
-  },
-  checkOutTime: {
-    type: Date,
   },
   createdAt: {
     type: Date,

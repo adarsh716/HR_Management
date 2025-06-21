@@ -132,3 +132,22 @@ export const deleteEmployee = async (employeeId) => {
     throw error.response ? error.response.data : error.message
   }
 }
+
+export const getAllEmployeesWithAttendance = async () => {
+  try {
+    const response = await apiClient.get("/api/attendance/")
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}
+
+export const updateAttendanceStatus = async (employeeId, status) => {
+  try {
+    console.log("Updating attendance for employee: 3 : ", employeeId, "with status:", status);
+    const response = await apiClient.put(`/api/attendance/${employeeId}`, { status })
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}
