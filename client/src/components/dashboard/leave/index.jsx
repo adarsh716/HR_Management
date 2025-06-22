@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown,FileText } from "lucide-react";
 import DatePicker from "../calendar/date-picker";
 // import "./index.css"
 import notification from "../../../assets/notification.svg";
@@ -8,58 +8,17 @@ import profile from "../../../assets/profile.png";
 import downarrow from "../../../assets/downarrow.svg";
 import Calendar from "../calendar";
 import LeaveCalendar from "./LeaveCalendar";
+import { useContext } from "react";
+import { AuthContext } from "../../../context/AuthContext";
+import { useEffect } from "react";
 
 export default function LeaveManagement() {
-  const [leaves, setLeaves] = useState([
-    {
-      id: 1,
-      name: "Jacob William",
-      leaveDate: "2023-03-15",
-      status: "Pending",
-      designation: "Software Engineer",
-      reason: "Personal",
-      documents: null,
-    },
-    {
-      id: 2,
-      name: "Guy Hawkins",
-      leaveDate: "2022-11-08",
-      status: "Approved",
-      designation: "UI Designer",
-      reason: "Medical",
-      documents: null,
-    },
-    {
-      id: 3,
-      name: "Arlene McCoy",
-      leaveDate: "2023-07-22",
-      status: "Rejected",
-      designation: "Project Manager",
-      reason: "Vacation",
-      documents: null,
-    },
-    {
-      id: 4,
-      name: "Leslie Alexander",
-      leaveDate: "2024-01-10",
-      status: "Pending",
-      designation: "Business Analyst",
-      reason: "Personal",
-      documents: null,
-    },
-  ]);
 
-  // Employee list for the dropdown
-  const [employees] = useState([
-    { id: 1, name: "Jane Cooper", designation: "Software Engineer" },
-    { id: 2, name: "Janney Wilson", designation: "UI Designer" },
-    { id: 3, name: "John Doe", designation: "Project Manager" },
-    { id: 4, name: "Sarah Smith", designation: "Business Analyst" },
-  ]);
+  const { leaves, addLeave, setLeaves, employees, fetchLeaves, updateLeaveStatus,handleDownloadDocument } = useContext(AuthContext);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState({});
-  const [actionMenuOpen, setActionMenuOpen] = useState({});
+
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
@@ -74,17 +33,14 @@ export default function LeaveManagement() {
     documents: null,
   });
 
+  useEffect(() => {
+    fetchLeaves();
+  }, []);
+
   const toggleDropdown = (id, type) => {
     setDropdownOpen((prev) => ({
       ...prev,
       [type + id]: !prev[type + id],
-    }));
-  };
-
-  const toggleActionMenu = (id) => {
-    setActionMenuOpen((prev) => ({
-      ...prev,
-      [id]: !prev[id],
     }));
   };
 
@@ -102,12 +58,12 @@ export default function LeaveManagement() {
   };
 
   const handleEmployeeSelect = (employee) => {
-    setNewLeave((prev) => ({ 
-      ...prev, 
-      name: employee.name,
-      designation: employee.designation 
+    setNewLeave((prev) => ({
+      ...prev,
+      name: employee?.userId?.name,
+      designation: employee.position
     }));
-    setEmployeeSearchTerm(employee.name);
+    setEmployeeSearchTerm(employee.userId?.name);
     setEmployeeDropdownOpen(false);
   };
 
@@ -125,15 +81,11 @@ export default function LeaveManagement() {
   };
 
   const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())
+    employee?.userId?.name?.toLowerCase()?.includes(employeeSearchTerm?.toLowerCase())
   );
 
-  const updateStatus = (id, newStatus) => {
-    setLeaves((prev) =>
-      prev.map((leave) =>
-        leave.id === id ? { ...leave, status: newStatus } : leave
-      )
-    );
+  const updateStatus = async (id, newStatus) => {
+    await updateLeaveStatus(id, newStatus);
     setDropdownOpen({});
   };
 
@@ -161,6 +113,21 @@ export default function LeaveManagement() {
       ]);
     }
 
+    console.log({
+      leaveDate: newLeave.leaveDate,
+      documents: newLeave.documents,
+      reason: newLeave.reason,
+      employeeId: employees.find(e => e?.userId?.name === newLeave.name)?._id || null,
+    })
+
+
+    addLeave({
+      leaveDate: newLeave.leaveDate,
+      documents: newLeave.documents,
+      reason: newLeave.reason,
+      employeeId: employees.find(e => e?.userId?.name === newLeave.name)?._id || null,
+    });
+
     setNewLeave({
       name: "",
       leaveDate: "",
@@ -174,10 +141,14 @@ export default function LeaveManagement() {
     setDialogOpen(false);
   };
 
-  const deleteLeave = (id) => {
-    setLeaves((prev) => prev.filter((e) => e.id !== id));
-    setActionMenuOpen((prev) => ({ ...prev, [id]: false }));
-  };
+  function formatMongoDate(dateInput) {
+    const date = new Date(dateInput);
+
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  }
+
+
 
   const resetDialog = () => {
     setNewLeave({
@@ -201,6 +172,7 @@ export default function LeaveManagement() {
         <div className="employee-header">
           <div className="header-top">
             <h1 className="employee-title">Leaves</h1>
+
             <div className="header-icons">
               <div className="icon-item">
                 <img
@@ -276,9 +248,9 @@ export default function LeaveManagement() {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "row" }}>
-          <div className="table-container" style={{width:'70%'}}>
+          <div className="table-container" style={{ width: '70%' }}>
             {leaves.length > 0 ? (
-              <div className="table-wrapper">
+              <div className="table-wrapper" >
                 <table className="employee-table">
                   <thead className="table-header">
                     <tr>
@@ -295,36 +267,36 @@ export default function LeaveManagement() {
                       <th className="table-header-cell">Name</th>
                       <th className="table-header-cell">Date</th>
                       <th className="table-header-cell">Status</th>
-                      <th className="table-header-cell">Action</th>
+                      <th className="table-header-cell">Docs</th>
                     </tr>
                   </thead>
                   <tbody>
                     {leaves.map((leave) => (
-                      <tr key={leave.id} className="table-row">
+                      <tr key={leave?._id} className="table-row">
                         <td className="table-cell">
                           <img
                             src={profile || "/placeholder.svg"}
-                            alt="Profile"
+                            alt="Profile" 
                           />
                         </td>
                         <td className="table-cell table-cell-name">
-                          {leave.name}
+                          {leave.employeeId.name}
                         </td>
-                        <td className="table-cell">{leave.leaveDate}</td>
+                        <td className="table-cell">{formatMongoDate(leave.leaveDate)}</td>
                         <td className="table-cell col-status">
                           <div className="status-dropdown">
                             <button
-                              onClick={() => toggleDropdown(leave.id, "status")}
+                              onClick={() => toggleDropdown(leave._id, "status")}
                               className={`status-button status-${leave.status.toLowerCase()}`}
                             >
                               {leave.status}
                               <span className="status-arrow">▼</span>
                             </button>
-                            {dropdownOpen["status" + leave.id] && (
+                            {dropdownOpen["status" + leave._id] && (
                               <div className="dropdown-menu">
                                 <div
                                   onClick={() =>
-                                    updateStatus(leave.id, "Pending")
+                                    updateStatus(leave._id, "Pending")
                                   }
                                   className="dropdown-item"
                                 >
@@ -332,7 +304,7 @@ export default function LeaveManagement() {
                                 </div>
                                 <div
                                   onClick={() =>
-                                    updateStatus(leave.id, "Approved")
+                                    updateStatus(leave._id, "Approved")
                                   }
                                   className="dropdown-item"
                                 >
@@ -340,7 +312,7 @@ export default function LeaveManagement() {
                                 </div>
                                 <div
                                   onClick={() =>
-                                    updateStatus(leave.id, "Rejected")
+                                    updateStatus(leave._id, "Rejected")
                                   }
                                   className="dropdown-item"
                                 >
@@ -351,29 +323,14 @@ export default function LeaveManagement() {
                           </div>
                         </td>
                         <td className="table-cell">
-                          <div className="action-menu">
+                          <div >
                             <button
-                              onClick={() => toggleActionMenu(leave.id)}
-                              className="action-button"
+                              onClick={() => handleDownloadDocument(leave._id)}
+                              style={{border: 'none', background: 'none', cursor: 'pointer'}}
                             >
-                              <span className="action-dots"></span>
+                              <FileText size={18} />
                             </button>
-                            {actionMenuOpen[leave.id] && (
-                              <div className="action-dropdown">
-                                <div
-                                  className="dropdown-item"
-                                  onClick={() => openEditDialog(leave)}
-                                >
-                                  Edit Leave
-                                </div>
-                                <div
-                                  className="dropdown-item delete-item"
-                                  onClick={() => deleteLeave(leave.id)}
-                                >
-                                  Delete Leave
-                                </div>
-                              </div>
-                            )}
+                            
                           </div>
                         </td>
                       </tr>
@@ -390,8 +347,8 @@ export default function LeaveManagement() {
               </div>
             )}
           </div>
-          <div style={{width:'30%'}}>
-            <LeaveCalendar/>
+          <div style={{ width: '30%' }}>
+            <LeaveCalendar />
           </div>
         </div>
       </div>
@@ -440,7 +397,7 @@ export default function LeaveManagement() {
                           className="employee-dropdown-item"
                           onClick={() => handleEmployeeSelect(employee)}
                         >
-                          {employee.name}
+                          {employee.userId?.name}
                         </div>
                       ))}
                     </div>
@@ -462,7 +419,6 @@ export default function LeaveManagement() {
                   value={newLeave.leaveDate}
                   onChange={handleDateChange}
                   placeholder="Leave Date*"
-                  className="dialog-input"
                 />
 
                 {/* Documents Upload */}
@@ -477,7 +433,7 @@ export default function LeaveManagement() {
                   <label htmlFor="documents" className="documents-label">
                     <span>Documents</span>
                     <svg className="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                     </svg>
                   </label>
                 </div>
@@ -500,6 +456,6 @@ export default function LeaveManagement() {
           </div>
         </div>
       )}
-      </div>
+    </div>
   );
 }

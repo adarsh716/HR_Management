@@ -71,18 +71,15 @@ export const updateCandidateStatus = async (candidateId, status) => {
 
 export const downloadResume = async (candidateId, candidateName) => {
   try {
-    // Use the backend API endpoint instead of direct Cloudinary URL
     const response = await apiClient.get(`/api/candidate/download-resume/${candidateId}`, {
-      responseType: 'blob', // Important: Set response type to blob for file download
+      responseType: 'blob', 
     })
 
-    // Create blob URL and trigger download
     const blob = new Blob([response.data])
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
 
-    // Extract filename from Content-Disposition header or use default
     const contentDisposition = response.headers['content-disposition']
     let filename = `${candidateName.replace(/\s+/g, "_")}_resume.pdf`
     
@@ -149,5 +146,93 @@ export const updateAttendanceStatus = async (employeeId, status) => {
     return response.data
   } catch (error) {
     throw error.response ? error.response.data : error.message
+  }
+}
+
+export const getAllLeaves = async () => {
+  try {
+    const response = await apiClient.get("/api/leave/leaves/fetch");
+    console.log("Fetched all leaves:", response.data)
+    return response.data
+  }
+  catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}
+
+export const createLeave=async({employeeId,leaveDate, reason,documents})=>{
+  console.log("Creating leave request with data:", { employeeId, leaveDate, reason, documents })
+
+  try {
+    const formData = new FormData()
+    formData.append("employeeId", employeeId)
+    formData.append("leaveDate", leaveDate)
+    formData.append("reason", reason)
+    if (documents) formData.append("document", documents)
+
+    const response = await apiClient.post("/api/leave/leaves", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+
+}
+
+export const updateLeave = async (leaveId, status) => {
+  console.log("Updating leave status for leaveId:", leaveId, "with status:", status)
+  try {
+    const response = await apiClient.patch(`/api/leave/leaves/${leaveId}`, {
+      status: status,
+    })
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}
+
+export const getLeaveStatistics = async (month, year) => {
+  try {
+    const response = await apiClient.get(`/api/leave/leaves/statistics?month=${month}&year=${year}`)
+    console.log("Fetched leave statistics:", response.data)
+    return response.data
+  } catch (error) {
+    throw error.response ? error.response.data : error.message
+  }
+}
+
+export const downloadDocument = async (leaveId) => {
+  try {
+
+    const response = await apiClient.get(`/api/leave/download-document/${leaveId}`, {
+      responseType: 'blob', 
+    })
+
+    const blob = new Blob([response.data])
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+
+    const contentDisposition = response.headers['content-disposition']
+    let filename = `${leaveId.replace(/\s+/g, "_")}_document.pdf`
+
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+      if (filenameMatch) {
+        filename = filenameMatch[1]
+      }
+    }
+
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    return { success: true, message: "Document downloaded successfully" }
+  } catch (error) {
+    console.error("Download error:", error)
+    throw new Error("Failed to download resume: " + (error.response?.data?.message || error.message))
   }
 }

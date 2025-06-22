@@ -84,11 +84,11 @@ export default function AttendanceManagement() {
     try {
       console.log("Updating status for employee:", employeeId, "to", newStatus);
       await updateAttendance(employeeId, newStatus);
-      setOpenStatusId(null); // Close dropdown after successful update
+      setOpenStatusId(null); 
     } catch (err) {
       console.error("Status update error:", err);
       alert("Failed to update attendance status: " + (err.message || "Unknown error"));
-      setOpenStatusId(null); // Close dropdown on error to ensure consistent behavior
+      setOpenStatusId(null); 
     }
   };
 
@@ -180,7 +180,7 @@ export default function AttendanceManagement() {
                   className="filter-button"
                 >
                   {selectedStatus}
-                  <ChevronDown className="filter-arrow" />
+                  {/* <ChevronDown className="filter-arrow" /> */}
                 </button>
                 {dropdownOpen["filterstatus"] && (
                   <div className="dropdown-menu">
@@ -218,7 +218,7 @@ export default function AttendanceManagement() {
                   className="filter-button"
                 >
                   {selectedDepartment}
-                  <ChevronDown className="filter-arrow" />
+                  {/* <ChevronDown className="filter-arrow" /> */}
                 </button>
                 {dropdownOpen["filterdepartment"] && (
                   <div className="dropdown-menu">

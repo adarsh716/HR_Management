@@ -170,3 +170,42 @@ margin-top: 20px;
   color: #64748b;
   font-weight: 500;
 }
+
+.leave-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.leave-count {
+  font-size: 10px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  color: white;
+  font-weight: bold;
+}
+
+.leave-count.approved {
+  background-color: #4d007d;
+}
+
+.leave-count.pending {
+  background-color: #f59e0b;
+}
+
+.leave-count.rejected {
+  background-color: #ef4444;
+}
+
+.total-count {
+  font-size: 9px;
+  color: #666;
+  font-weight: bold;
+}
+
+.calendar-day.has-leaves {
+  background-color: #f0f9ff;
+  border: 1px solid #4d007d;
+}
+

@@ -14,6 +14,10 @@ import {
   deleteEmployee,
   getAllEmployeesWithAttendance,
   updateAttendanceStatus,
+  createLeave,
+  getAllLeaves,
+  updateLeave,
+  downloadDocument
 } from "../api/auth";
 
 export const AuthContext = createContext();
@@ -25,7 +29,8 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [attendanceData, setAttendanceData] = useState([]); // Initialize as empty array
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [leaves, setLeaves] = useState([]);
   const [statusUpdateLoading, setStatusUpdateLoading] = useState({});
   const [employeeLoading, setEmployeeLoading] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -66,6 +71,17 @@ export const AuthProvider = ({ children }) => {
       setEmployeeLoading(false);
     }
   }, []);
+
+  const fetchLeaves= useCallback(async () => {
+    try {
+      const data = await getAllLeaves();
+      console.log("Fetched leaves:", data);
+      setLeaves(data.leaves || []);
+      setError(null);
+    } catch (err) {
+      setError(err.message || "Failed to fetch leaves");
+    }
+  },[]);
 
   const fetchCandidates = useCallback(async () => {
     try {
@@ -118,6 +134,7 @@ export const AuthProvider = ({ children }) => {
       fetchCandidates();
       fetchEmployees();
       fetchAttendanceData();
+      fetchLeaves();
       setError(null);
       return response;
     } catch (err) {
@@ -148,6 +165,35 @@ export const AuthProvider = ({ children }) => {
       throw err;
     }
   };
+
+  const addLeave=async(data)=>{
+    console.log("Adding leave request with data:", data);
+    try {
+      const response = await createLeave(data);
+      fetchLeaves();
+      setError(null);
+      return response;
+    } catch (err) {
+      setError(err.message || "Failed to add leave request");
+      throw err;
+    }
+  }
+
+  const updateLeaveStatus = async (leaveId, status) => {
+    try {
+      await updateLeave(leaveId, status);
+      setLeaves((prev) =>
+        prev.map((leave) =>
+          leave._id === leaveId ? { ...leave, status: status } : leave
+        )
+      );
+      setError(null);
+    }
+    catch (err) {
+      setError(err.message || "Failed to update leave status");
+      throw err;
+    }
+  }
 
   const removeCandidate = async (candidateId) => {
     try {
@@ -276,6 +322,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const handleDownloadDocument=async(leaveId)=>{
+    try {
+      console.log("AuthContext - handleDownloadResume called with:", {
+        leaveId,
+      });
+
+      if (!leaveId) {
+        throw new Error("Candidate ID is required");
+      }
+
+      await downloadDocument(leaveId);
+      setError(null);
+      return { success: true, message: "Resume downloaded successfully" };
+    } catch (err) {
+      console.error("AuthContext - Download error:", err);
+      setError(err.message || "Failed to download resume");
+      throw err;
+    }
+  }
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -314,6 +380,12 @@ export const AuthProvider = ({ children }) => {
         fetchAttendanceData,
         logout,
         fetchCandidates,
+        addLeave,
+        fetchLeaves,
+        leaves,
+        setLeaves,
+        updateLeaveStatus,
+        handleDownloadDocument
       }}
     >
       {children}

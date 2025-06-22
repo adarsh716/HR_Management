@@ -53,10 +53,9 @@ export default function Calendar({ onDateSelect, selectedDate }) {
   }
 
   const handleDateClick = (day) => {
-    // Create date in local timezone to avoid timezone offset issues
+
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
 
-    // Don't allow selection of past dates (but allow today)
     if (clickedDate >= today) {
       setInternalSelectedDate(clickedDate)
       if (onDateSelect) {

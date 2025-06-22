@@ -17,7 +17,6 @@
   overflow: hidden;
 }
 
-/* Header Styles */
 .candidate-header {
   padding: 24px;
   border-bottom: 1px solid #e5e7eb;
@@ -223,7 +222,6 @@
   overflow: visible;
 }
 
-/* Column width definitions */
 .col-sr-no {
   width: 8%;
 }
@@ -306,7 +304,6 @@
   font-weight: 500;
 }
 
-/* Empty state */
 .empty-state {
   padding: 60px 20px;
   text-align: center;
@@ -331,7 +328,6 @@
   opacity: 0.7;
 }
 
-/* Fixed dropdown positioning for table cells */
 .status-dropdown {
   position: relative;
   display: inline-block;
@@ -342,7 +338,6 @@
   display: inline-block;
 }
 
-/* Status button base styles */
 .status-button {
   display: inline-flex;
   align-items: center;
@@ -357,7 +352,6 @@
   position: relative;
 }
 
-/* Status button color variants */
 .status-button.status-new {
   background-color: #f3f4f6;
   color: #374151;
@@ -421,7 +415,6 @@
   color: #6b7280;
 }
 
-/* Unified Dropdown Menu Styles with better positioning */
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 4px);
@@ -434,7 +427,6 @@
   overflow: hidden;
 }
 
-/* Specific positioning for status and action dropdowns */
 .status-dropdown .dropdown-menu {
   left: 0;
   right: auto;
@@ -464,7 +456,6 @@
   background-color: #f9fafb;
 }
 
-/* Danger Item (Delete) */
 .delete-item {
   color: #dc2626;
 }
@@ -473,7 +464,6 @@
   background-color: #fef2f2;
 }
 
-/* Experience column styling */
 .experience-cell {
   color: #6b7280;
 }
@@ -622,7 +612,6 @@
   cursor: not-allowed;
 }
 
-/* Profile Dropdown */
 .profile-dropdown {
   position: absolute;
   top: 100%;
@@ -683,7 +672,6 @@
   color: #4d007d;
 }
 
-/* Form Layout Updates */
 .reason-input {
   grid-column: 1 / -1;
 }
@@ -736,8 +724,6 @@
 .employee-dropdown-item:last-child {
   border-bottom: none;
 }
-
-/* Add these styles to your existing CSS file */
 
 .filter-summary {
   padding: 8px 16px;

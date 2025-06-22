@@ -4,12 +4,16 @@ const leaveController = require('../controllers/leaveController');
 
 router.post('/leaves', leaveController.addLeave);
 
-router.get('/employees/search', leaveController.searchEmployee);
+router.get('/leaves/fetch', leaveController.getAllLeaves);
 
-router.get('/leaves', leaveController.getAllLeaves);
+router.get('/employees/search', leaveController.searchEmployee);
 
 router.get('/leaves/approved-today', leaveController.getApprovedLeavesToday);
 
-router.put('/leaves/:id', leaveController.updateLeaveStatus);
+router.patch('/leaves/:leaveId', leaveController.updateLeaveStatus);
+
+router.get("/leaves/statistics", leaveController.getLeaveStatistics);
+
+router.get("/download-document/:leaveId", leaveController.downloadDocument);
 
 module.exports = router;

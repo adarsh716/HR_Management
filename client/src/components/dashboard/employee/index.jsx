@@ -208,7 +208,7 @@ export default function EmployeeManagement() {
               <div className="filter-dropdown">
                 <button onClick={() => toggleDropdown("department", "filter")} className="filter-button">
                   {selectedDepartment}
-                  <ChevronDown className="filter-arrow" />
+                  {/* <ChevronDown className="filter-arrow" /> */}
                 </button>
                 {dropdownOpen["filterdepartment"] && (
                   <div className="dropdown-menu">
